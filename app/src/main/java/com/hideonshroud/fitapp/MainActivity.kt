@@ -1,8 +1,9 @@
 package com.hideonshroud.fitapp
 
+import android.content.Intent
+import android.content.IntentFilter
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.hideonshroud.fitapp.ViewPagerAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.hideonshroud.fitapp.databinding.ActivityMainBinding
 
@@ -15,7 +16,9 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        val filter = IntentFilter(Intent.ACTION_TIME_TICK)
+        val timeReciever = TimeReceiver()
+        registerReceiver(timeReciever, filter)
         val listOfFragments = listOf(HomeFragment(), LeaderboardFragment(), WorkoutsFragment(), ProfileFragment())
         binding.viewPager.adapter = ViewPagerAdapter(this,listOfFragments)
         binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
