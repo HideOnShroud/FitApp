@@ -5,55 +5,87 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.EditText
+import android.widget.RadioGroup
+import android.widget.TextView
+import android.widget.Toast
+import androidx.lifecycle.ViewModelProvider
+import androidx.room.Room
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
-/**
- * A simple [Fragment] subclass.
- * Use the [HomeFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
+
 class HomeFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
-
+    private lateinit var mCalorieViewModel: CalorieViewModel
+    private lateinit var calorieDao: CalorieDao
+    private lateinit var ageEditTextView: TextView
+    private lateinit var heightEditText: EditText
+    private lateinit var weightEditText: EditText
+    private lateinit var activityEditText: EditText
+    private lateinit var sexRadio: RadioGroup
+    private lateinit var calculateBMRButton:Button
+    private lateinit var calShow: TextView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
+
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_home, container, false)
+        val rootView = inflater.inflate(R.layout.fragment_home, container, false)
+        mCalorieViewModel = ViewModelProvider(this).get(CalorieViewModel::class.java)
+        // Find your views by ID
+        ageEditTextView = rootView.findViewById(R.id.ageEditText)
+        heightEditText = rootView.findViewById(R.id.heightEditText)
+        activityEditText = rootView.findViewById(R.id.activityEditText)
+        weightEditText = rootView.findViewById(R.id.weightEditText)
+        calShow = rootView.findViewById(R.id.calShow)
+        sexRadio = rootView.findViewById(R.id.sexRadio)
+
+        calculateBMRButton = rootView.findViewById(R.id.calculateBMRButton)
+        calculateBMRButton.setOnClickListener {
+            var weight = weightEditText.text.toString().toDouble()
+            var height = heightEditText.text.toString().toInt()
+            var age = ageEditTextView.text.toString().toInt()
+            var activity = activityEditText.text.toString().toInt()
+            var bmr = 0.0
+            if (sexRadio.checkedRadioButtonId == R.id.radioM){
+                bmr = calculateBMRForMen(weight,height,age)
+            }else if(sexRadio.checkedRadioButtonId == R.id.radioF){
+                bmr = calculateBMRForWomen(weight,height,age)}else{
+                Toast.makeText(requireContext(),"Select Sex",Toast.LENGTH_SHORT).show()
+            }
+
+            bmr = when (activity) {
+                1 -> bmr
+                2 -> bmr + 400
+                3 -> bmr + 800
+                4 -> bmr + 1600
+                5 -> bmr + 2000
+                else -> bmr
+            }
+
+            calShow.text = bmr.toString() + " Cals"
+            insertDataToDatabase(bmr.toString())
+        }
+
+        return rootView
+    }
+    private fun insertDataToDatabase(bmr:String){
+        val calorie = Calorie(0, bmr)
+        mCalorieViewModel.addCalorie(calorie)
+        Toast.makeText(requireContext(), "Success", Toast.LENGTH_SHORT)
+    }
+    fun calculateBMRForMen(weight: Double, height: Int, age: Int): Double {
+        return 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age)
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment HomeFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            HomeFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+    fun calculateBMRForWomen(weight: Double, height: Int, age: Int): Double {
+        return 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age)
     }
 }
